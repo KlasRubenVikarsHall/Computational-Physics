@@ -1,7 +1,8 @@
 import copy
 
 import numpy as np
-from numpy.random import rand, randn
+from numpy.random import rand
+from random import randrange
 from matplotlib import pyplot as plt
 import pickle
 
@@ -39,7 +40,7 @@ def initialize_route(M):
 
 def nnsolution(M, distances):
     distances = np.array(distances)
-    route = np.zeros(M,dtype=np.int8)
+    route = np.zeros(M,dtype=np.int16)
     counter = 0
     current_index = 0
     while counter < M - 1:
@@ -51,7 +52,7 @@ def nnsolution(M, distances):
 
 
 def exchange(M, prev_route, a, b): # a: cut between a and a+1. b cut between b and b+1
-    new_route = np.zeros(M,dtype=np.int8)
+    new_route = np.zeros(M,dtype=np.int16)
     new_route[0:a+1] = prev_route[0:a+1]
     new_route[a+1:b+1] = np.flip(prev_route[a+1:b+1])
     new_route[b+1:] = prev_route[b+1:]
@@ -66,13 +67,34 @@ def length(M, distances, route):
     return total_length
 
 
-def MC():
-    pass
+def MC(N, M, T, distances, route):
+    for i in range(N):
+        a = randrange(M)
+        b = randrange(M)
+        while a == b:
+            b = randrange(M)
+        ksi = rand()
+        d_e = np.exp(-delta_E(M, distances, route, a, b) / T)
+        if ksi < np.min((d_e, 1)):
+            route = exchange(M, route, a, b)
+    return route
 
 
-def delta_E(D, a, b):
-    dE = D[a,b] + D[a+1,b+1] 
-    dE -= D[a,a+1] + D[b,b+1] 
+def delta_E(M, D, route, a, b):
+    adist = route[a]
+    if a == M - 1:
+        adist2 = route[0]
+    else:
+        adist2 = route[a+1]
+
+    bdist = route[b]
+    if b == M - 1:
+        bdist2 = route[0]
+    else:
+        bdist2 = route[b+1]
+
+    dE = D[adist,bdist] + D[adist2,bdist2] # new
+    dE -= D[adist,adist2] + D[bdist,bdist2] # old -> longer -> positive
     return dE
 
 
@@ -90,7 +112,11 @@ if __name__ == "__main__":
         [city, dist] = pickle.load(file)
     M = len(city)
     route_1 = initialize_route(M)
+    route_2 = nnsolution(M, dist)
+    route_3 = MC(10000, M, 0.01, dist, route_2)
     print(length(M, dist, route_1))
+    print(length(M, dist, route_2))
+    print(length(M, dist, route_3))
     # route_nn = nnsolution(M, dist)
     # print(length(M, dist, route_nn))
     # print(exchange(M, initialize_route(M), 0, 5))
