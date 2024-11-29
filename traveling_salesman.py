@@ -3,6 +3,7 @@ import copy
 import numpy as np
 from numpy.random import rand, randn
 from matplotlib import pyplot as plt
+import pickle
 
 
 def initialize_system(M=100): #Creates a town of M houses on an identity square.
@@ -22,7 +23,7 @@ def initialize_system(M=100): #Creates a town of M houses on an identity square.
     return city, distances
 
 
-def optimal_solution(city): #Solve by combinatoric
+def optimal_solution(city):
     pass
 
 
@@ -31,7 +32,7 @@ def metric(a, b):
     return distance
 
 
-def initialize_route(M, distances):
+def initialize_route(M):
     route = [i for i in range(M)]
     return route
 
@@ -57,9 +58,39 @@ def exchange(M, prev_route, a, b): # a: cut between a and a+1. b cut between b a
     return new_route
 
 
-def delta_E():
+def length(M, distances, route):
+    total_length = 0
+    for i in range(M-1):
+        total_length += distances[route[i],route[i+1]]
+    total_length += distances[0,route[-1]]
+    return total_length
+
+
+def MC():
+    pass
+
+
+def delta_E(D, a, b):
+    dE = D[a,b] + D[a+1,b+1] 
+    dE -= D[a,a+1] + D[b,b+1] 
+    return dE
+
+
+def annealing():
+    pass
+
+
 if __name__ == "__main__":
-    M = 8
-    city, dist = initialize_system(M)
-    #print(nnsolution(M, dist))
-    print(exchange(M, initialize_route(M, dist), 0, 5))
+    # M = 200
+    # Create and save new city
+    # city, dist = initialize_system(M)
+    # with open('city_200_1.pkl', 'wb') as file:
+    #     pickle.dump([city, dist], file)
+    with open('city_200_1.pkl', 'rb') as file:
+        [city, dist] = pickle.load(file)
+    M = len(city)
+    route_1 = initialize_route(M)
+    print(length(M, dist, route_1))
+    # route_nn = nnsolution(M, dist)
+    # print(length(M, dist, route_nn))
+    # print(exchange(M, initialize_route(M), 0, 5))
