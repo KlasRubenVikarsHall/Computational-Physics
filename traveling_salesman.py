@@ -15,7 +15,7 @@ def initialize_system(M=100): #Creates a town of M houses on an identity square.
     return city
 
 
-def theoretical_solution(city): #Solve by combinatorics
+def theoretical_solution(city): #Solve by combinatoric
     pass
 
 
