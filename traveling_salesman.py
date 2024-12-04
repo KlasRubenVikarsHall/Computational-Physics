@@ -4,6 +4,7 @@ from random import randrange
 from matplotlib import pyplot as plt
 import pickle
 from copy import deepcopy
+from itertools import permutations
 
 
 def initialize_system(M=100): #Creates a town of M houses on an identity square.
@@ -23,8 +24,13 @@ def initialize_system(M=100): #Creates a town of M houses on an identity square.
     return city, distances
 
 
-def optimal_solution(city):
-    pass
+def optimal_solution(M, D):
+    routes = [i for i in range(M)]
+    routes = list(permutations(routes))
+    distances = [length(M, D, route) for route in routes]
+    optimal = np.min(distances)
+    return optimal
+
 
 
 def metric(a, b):
@@ -60,9 +66,9 @@ def exchange(M, prev_route, a, b): # a: cut between a and a+1. b cut between b a
 
 def length(M, distances, route):
     total_length = 0
-    for i in range(M-1):
-        total_length += distances[route[i],route[i+1]]
-    total_length += distances[0,route[-1]]
+    for i in range(M - 1):
+        total_length += distances[route[i], route[i+1]]
+    total_length += distances[route[0], route[-1]]
     return total_length
 
 
@@ -109,10 +115,11 @@ def annealing(M, D, route, T_tot, T_step, T_0, r):
     T_protocol = [T_0 * r ** i for i in range(int(T_tot / T_step))]
     for T in T_protocol:
         route = MC(T_step, M, T, D, route)
-        lengths.append(length(M, dist, route))
-    plotter = [T_step * (i + 1) for i in range(len(T_protocol))]
-    plt.plot(plotter, lengths)
-    plt.show()
+        lengths.append(length(M, D, route))
+    # plotter = [T_step * (i + 1) for i in range(len(T_protocol))]
+    # plt.plot(plotter, lengths)
+    # plt.show()
+    return route
 
 
 def tempering(M, D, route, N_tot, N_step, T_max, T_min, T_n):
@@ -144,7 +151,12 @@ def tempering(M, D, route, N_tot, N_step, T_max, T_min, T_n):
 
 
 if __name__ == "__main__":
-    # M = 200
+    # M = 10
+    # city, D = initialize_system(M)
+    # opt = optimal_solution(M, D)
+    # random = initialize_route(M)
+    # nn = nnsolution(M, D)
+    # print(length(M, D, random), length(M, D, nn), opt)
     # Create and save new city
     # city, dist = initialize_system(M)
     # with open('city_200_1.pkl', 'wb') as file:
@@ -155,12 +167,12 @@ if __name__ == "__main__":
     route_1 = initialize_route(M)
     route_2 = nnsolution(M, dist)
     route_3 = MC(10000, M, 0.01, dist, route_1)
-    temp_route = tempering(M, dist, route_1, 1000000, 20000, 0.1, 0.005, 8)
-    #route_annealing = annealing(M, dist, route_1, 1000000, 16000, 0.1, 0.95)
+    # temp_route = tempering(M, dist, route_1, 1000000, 20000, 0.1, 0.005, 8)
+    route_annealing = annealing(M, dist, route_1, 1000000, 16000, 0.1, 0.95)
     print(length(M, dist, route_1))
     print(length(M, dist, route_2))
     print(length(M, dist, route_3))
-    print(temp_route)
+    print(length(M, dist, route_annealing))
+    # print(temp_route)
     # route_nn = nnsolution(M, dist)
     # print(length(M, dist, route_nn))
-    # print(exchange(M, initialize_route(M), 0, 5))
