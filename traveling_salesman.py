@@ -58,9 +58,14 @@ def nnsolution(M, distances):
 
 def exchange(M, prev_route, a, b): # a: cut between a and a+1. b cut between b and b+1
     new_route = np.zeros(M,dtype=np.int16)
-    new_route[0:a+1] = prev_route[0:a+1]
-    new_route[a+1:b+1] = np.flip(prev_route[a+1:b+1])
-    new_route[b+1:] = prev_route[b+1:]
+    if a < b:
+        new_route[0:a+1] = prev_route[0:a+1]
+        new_route[a+1:b+1] = np.flip(prev_route[a+1:b+1])
+        new_route[b+1:] = prev_route[b+1:]
+    else: 
+        new_route[0:b+1] = prev_route[0:b+1]
+        new_route[b+1:a+1] = np.flip(prev_route[b+1:a+1])
+        new_route[a+1:] = prev_route[a+1:]
     return new_route
 
 
@@ -73,16 +78,21 @@ def length(M, distances, route):
 
 
 def MC(N, M, T, distances, route):
-    for i in range(N):
+    distance = [length(M, distances, route)]
+    for i in range(N-1):
         a = randrange(M)
         b = randrange(M)
         while a == b:
             b = randrange(M)
         ksi = rand()
-        d_e = np.exp(-delta_E(M, distances, route, a, b) / T)
+        d_E = delta_E(M, distances, route, a, b)
+        d_e = np.exp(-d_E / T)
         if ksi < np.min((d_e, 1)):
             route = exchange(M, route, a, b)
-    return route
+            distance.append(distance[-1] + d_E)
+        else:
+            distance.append(distance[-1])
+    return route, distance
 
 
 def delta_E(M, D, route, a, b):
@@ -111,15 +121,12 @@ def annealing(M, D, route, T_tot, T_step, T_0, r):
     # T_step: Amount of steps of MC before lowering T
     # T_0: Initial T
     # r: Cooling rate, r < 1
-    lengths = []
+    dist_list = []
     T_protocol = [T_0 * r ** i for i in range(int(T_tot / T_step))]
     for T in T_protocol:
-        route = MC(T_step, M, T, D, route)
-        lengths.append(length(M, D, route))
-    # plotter = [T_step * (i + 1) for i in range(len(T_protocol))]
-    # plt.plot(plotter, lengths)
-    # plt.show()
-    return route
+        route, tot_dist = MC(T_step, M, T, D, route)
+        dist_list.extend(tot_dist)
+    return route, dist_list
 
 
 def tempering(M, D, route, N_tot, N_step, T_max, T_min, T_n):
@@ -131,48 +138,61 @@ def tempering(M, D, route, N_tot, N_step, T_max, T_min, T_n):
     T_step = T_max / T_n
     T_list = [T_min + T_step * i for i in range(T_n)]
     route_list = [deepcopy(route) for i in range(T_n)]
+    dist_matrix = [[length(M, D, route)] for route in route_list]
     for j in range(int(N_tot / N_step)):
         for i in range(len(route_list)):
-            route_list[i] = MC(N_step, M, T_list[i], D, route_list[i])
+            route_list[i], tot_dist = MC(N_step, M, T_list[i], D, route_list[i])
+            dist_matrix[i].extend(tot_dist)
         # Change places 
         T_rand = randrange(T_n - 2) # Randomly pick a Temperature between T_0 to T_max - 1
         ksi = rand()
-        beta = 1 / T_list[T_rand] - 1 / T_list[T_rand + 1]
-        dE = length(M, D, route_list[T_rand]) - length(M, D, route_list[T_rand + 1])
-        if ksi < np.min((1, np.exp(beta * dE))):
+        beta = + 1 / T_list[T_rand] - 1 / T_list[T_rand + 1]
+        dE =  + length(M, D, route_list[T_rand]) - length(M, D, route_list[T_rand + 1])
+        check = np.exp(beta * dE)
+        if ksi < np.min((1, check)):
             new_route1 = deepcopy(route_list[T_rand])
             new_route2 = deepcopy(route_list[T_rand + 1])
             route_list[T_rand] = new_route2
             route_list[T_rand + 1] = new_route1
     len_list = [length(M, D, route_list[i]) for i in range(T_n)]
-    print(len_list)
-    return np.min(len_list)
+    return route_list, dist_matrix
     
 
-
 if __name__ == "__main__":
-    # M = 10
-    # city, D = initialize_system(M)
+    M = 200
+    #N_tot = 10000
+    city, dist= initialize_system(M)
     # opt = optimal_solution(M, D)
     # random = initialize_route(M)
     # nn = nnsolution(M, D)
     # print(length(M, D, random), length(M, D, nn), opt)
     # Create and save new city
-    # city, dist = initialize_system(M)
-    # with open('city_200_1.pkl', 'wb') as file:
-    #     pickle.dump([city, dist], file)
-    with open('city_200_1.pkl', 'rb') as file:
-        [city, dist] = pickle.load(file)
-    M = len(city)
-    route_1 = initialize_route(M)
-    route_2 = nnsolution(M, dist)
-    route_3 = MC(10000, M, 0.01, dist, route_1)
-    # temp_route = tempering(M, dist, route_1, 1000000, 20000, 0.1, 0.005, 8)
-    route_annealing = annealing(M, dist, route_1, 1000000, 16000, 0.1, 0.95)
-    print(length(M, dist, route_1))
-    print(length(M, dist, route_2))
-    print(length(M, dist, route_3))
-    print(length(M, dist, route_annealing))
+    with open('city_200_4.pkl', 'wb') as file:
+        pickle.dump([city, dist], file)
+    # with open('city_200_1.pkl', 'rb') as file:
+    #     [city, dist] = pickle.load(file)
+    # M = len(city)
+    # route_1 = initialize_route(M)
+    # route_2 = nnsolution(M, dist)
+    # route_annealing, tot_dist = annealing(M, dist, route_1, N_tot, 1000, 0.1, 0.5)
+    # route_3, tot_dist = MC(1000, M, 0.1, dist, route_1)
+    # plt.plot(range(N_tot), tot_dist)
+    # plt.show()
+    # temp_route, dist_matrix = tempering(M, dist, route_2, 1000000, 50000, 0.01, 0.0005, 8)
+    # print(length(M, dist, route_1))
+    # print(length(M, dist, route_2))
+    #print(length(M, dist, route_3))
+    #print(length(M, dist, route_annealing))
     # print(temp_route)
     # route_nn = nnsolution(M, dist)
     # print(length(M, dist, route_nn))
+    
+    # for i in range(8):
+    #     plt.plot(range(1000001), dist_matrix[i][:], label=f"v_{i+1}")
+
+    # # Add labels and legend
+    # plt.xlabel("Iteration step")
+    # plt.ylabel("Total length")
+    # plt.title("Parallel tempering")
+    # plt.legend()
+    # plt.show()
