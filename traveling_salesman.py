@@ -27,6 +27,7 @@ def initialize_system(M=100): #Creates a town of M houses on an identity square.
 def optimal_solution(M, D):
     routes = [i for i in range(M)]
     routes = list(permutations(routes))
+    print(routes)
     distances = [length(M, D, route) for route in routes]
     optimal = np.min(distances)
     return optimal
@@ -159,22 +160,38 @@ def tempering(M, D, route, N_tot, N_step, T_max, T_min, T_n):
     
 
 if __name__ == "__main__":
-    M = 200
-    #N_tot = 10000
-    city, dist= initialize_system(M)
-    # opt = optimal_solution(M, D)
+    M = 20
+    N_tot = 1000000
+    N_r = 20000
+    r = 0.95
+    T_0 = 0.1
+    # city, dist= initialize_system(M)
     # random = initialize_route(M)
     # nn = nnsolution(M, D)
     # print(length(M, D, random), length(M, D, nn), opt)
     # Create and save new city
-    with open('city_200_4.pkl', 'wb') as file:
-        pickle.dump([city, dist], file)
-    # with open('city_200_1.pkl', 'rb') as file:
-    #     [city, dist] = pickle.load(file)
-    # M = len(city)
-    # route_1 = initialize_route(M)
+    # with open('city_20_1.pkl', 'wb') as file:
+    #     pickle.dump([city, dist], file)
+
+
+    with open('city_200_2.pkl', 'rb') as file:
+        [city, dist] = pickle.load(file)
+    M = len(city)
+    route_1 = initialize_route(M)
     # route_2 = nnsolution(M, dist)
-    # route_annealing, tot_dist = annealing(M, dist, route_1, N_tot, 1000, 0.1, 0.5)
+    opt = optimal_solution(M, dist)
+    print(opt)
+    route_annealing, tot_dist = annealing(M, dist, route_1, N_tot, N_r, T_0, r)
+
+    # OPTIMAL VS ANNEALING
+    plt.plot(range(N_tot),tot_dist, label=f"Simulated annealing, d = {np.round(np.min(tot_dist), 4)}")
+    plt.plot(range(N_tot), [opt for i in range(N_tot)], '--', label=f"Optimal solution, d = {np.round(opt, 4)}")
+    plt.legend()
+    plt.xlabel("MC Iteration step")
+    plt.ylabel("Total length")
+    plt.show()
+    plt.savefig(f"Optimal vs annealing M=20, d = {np.round(np.min(tot_dist), 4)}.pdf")
+
     # route_3, tot_dist = MC(1000, M, 0.1, dist, route_1)
     # plt.plot(range(N_tot), tot_dist)
     # plt.show()
@@ -187,12 +204,15 @@ if __name__ == "__main__":
     # route_nn = nnsolution(M, dist)
     # print(length(M, dist, route_nn))
     
-    # for i in range(8):
-    #     plt.plot(range(1000001), dist_matrix[i][:], label=f"v_{i+1}")
+    ##for i in range(tot_dist):
+    #    plt.plot(range(1000001), dist_matrix[i][:], label=f"v_{i+1}")
 
-    # # Add labels and legend
-    # plt.xlabel("Iteration step")
+    # Add labels and legend
+    # plt.plot(range(N_tot), tot_dist, label="Simulated annealing")
+    # #plt.plot(range(N_tot+1), [opt for i in range(N_tot+1)], label="Exact ground state")
+    # plt.xlabel("MC Iteration step")
     # plt.ylabel("Total length")
-    # plt.title("Parallel tempering")
+    # # plt.title("Simulated annealing vs optimal sol")
     # plt.legend()
     # plt.show()
+    # plt.savefig(f"Simulated_annealingN={N_tot},r={r},T_0={T_0}.pdf", format="pdf")
