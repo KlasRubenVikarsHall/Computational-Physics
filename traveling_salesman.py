@@ -146,28 +146,29 @@ def tempering(M, D, route, N_tot, N_step, T_max, T_min, L, k=1):
             route_list[i], tot_dist = MC(N_step, M, T_list[i], D, route_list[i], k)
             dist_matrix[i].extend(tot_dist)
         # Change places 
-        T_rand = randrange(0, L - 1) # Randomly pick a Temperature between T_0 to T_max - 1
+        T_rand = randrange(0, L - 2) # Randomly pick a Temperature between T_0 to T_max - 1
         # while dist_matrix[T_rand,-1] == np.max(dist_matrix[:,-1]):
         #     T_rand = randrange(0, L - 1)
-        diff = np.zeros(L)
-        for i in range(L):
-            diff[i] = dist_matrix[T_rand][-1] - dist_matrix[i][-1]
-            if diff[i] == 0:
-                diff[i] = 10 ** 6
-        T_close = np.argmin([np.abs(element) for element in diff])
+        # diff = np.zeros(L)
+        # for i in range(L):
+        #     diff[i] = dist_matrix[T_rand][-1] - dist_matrix[i][-1]
+        #     if diff[i] == 0:
+        #         diff[i] = 10 ** 6
+        # T_close = np.argmin([np.abs(element) for element in diff])
+        T_close = T_rand + 1
         ksi = rand()
         beta = + 1 /( T_list[T_rand] * k) - 1 /( T_list[T_close] * k)
         dE =  length(M, D, route_list[T_rand]) - length(M, D, route_list[T_close])
         check = np.exp(beta * dE)
-        print(beta, dE)
-        print(check, T_rand, T_close, j)
+        # print(beta, dE)
+        # print(check, T_rand, T_close, j)
         if ksi < np.min((1, check)):
-            print(j)
+            # print(j)
             new_route1 = deepcopy(route_list[T_rand])
             new_route2 = deepcopy(route_list[T_close])
             route_list[T_rand] = new_route2
             route_list[T_close] = new_route1
-    len_list = [length(M, D, route_list[i]) for i in range(L)]
+    # len_list = [length(M, D, route_list[i]) for i in range(L)]
     return route_list, dist_matrix
     
 
@@ -248,10 +249,10 @@ if __name__ == "__main__":
     # basic_route = nnsolution(M, dist)
     # T_0 = np.sqrt(length(M, dist, basic_route)) / M
 
-    # N_sim = 1
+    # N_sim = 3
     # N_tot = 1000000
     # r_list = [0.5, 0.8, 0.9, 0.95, 0.99]
-    # N_r_list = [int(N_tot/5), int(N_tot/10), int(N_tot/20), int(N_tot/50), int(N_tot/100)]
+    # N_r_list = [int(N_tot/100), int(N_tot/50), int(N_tot/20), int(N_tot/10), int(N_tot/5)]
     # means = np.zeros((len(r_list), len(N_r_list)))
     # stds = np.zeros((len(r_list), len(N_r_list)))
     # for rid,r in enumerate(r_list):
@@ -288,7 +289,7 @@ if __name__ == "__main__":
     # # Add labels and a title
     # plt.xlabel("r")
     # plt.ylabel("N_r")
-    # plt.title(f"Contour Plot of distances")
+    # plt.title(f"Contour Plot of mean distances for 3 simulations")
     # plt.show()
 
     # # Define x and y coordinates for the grid
@@ -319,30 +320,83 @@ if __name__ == "__main__":
 
 
     # TEMPERING 200
-    with open('city_200_1.pkl', 'rb') as file:
-        [city, dist] = pickle.load(file)
-    M = len(city)
-    N_tot = 500000
+    # with open('city_200_1.pkl', 'rb') as file:
+    #     [city, dist] = pickle.load(file)
+    # M = len(city)
+    # N_tot = 500000
+    # N_r = 5000
+    # T_max = 0.03
+    # L = 10
+    # T_min = 0.0003
+
+    # # route = initialize_route(M)
+    # route = nnsolution(M, dist)
+    # temp_route, dist_matrix = tempering(M, dist, route, N_tot, N_r, T_max, T_min, L)
+
+    # T_step = (T_max - T_min) / (L - 1)
+    # T_list = [T_min + T_step * i for i in range(L)]
+    # for i in range(L):
+    #     plt.plot(range(N_tot +1), dist_matrix[i][:], label=f"R(T = {np.round(T_list[i],5)})")
+    #     # plt.plot(range(N_tot +1), dist_matrix[i][:], label=f"R(T = {np.round(T_list[i],4)}), d = {np.round(np.min(dist_matrix[i][-1]), 2)}")
+    # plt.legend()
+    # plt.xlabel("MC Iteration step")
+    # plt.ylabel("Total length")
+    # # plt.savefig(f"Tempering_M={M}_N_tot={N_tot}_N_r={N_r}_(T_max,L,T_min)={T_max, L, T_min}).pdf")
+    # plt.show()
+
+    # DIFFERENT CITIES
+
+    N_sim = 10
+    mean_an = []
+    std_an = []
+    mean_te = []
+    std_te = []
+
+    N_tot = 1000000
     N_r = 5000
     T_max = 0.01
     L = 10
     T_min = 0.0001
 
-    # route = initialize_route(M)
-    route = nnsolution(M, dist)
-    temp_route, dist_matrix = tempering(M, dist, route, N_tot, N_r, T_max, T_min, L)
+    N_totA = 10000000
+    N_rA = 100000
+    rA = 0.95
 
-    T_step = (T_max - T_min) / (L - 1)
-    T_list = [T_min + T_step * i for i in range(L)]
-    for i in range(L):
-        plt.plot(range(N_tot +1), dist_matrix[i][:], label=f"R(T = {np.round(T_list[i],5)})")
-        # plt.plot(range(N_tot +1), dist_matrix[i][:], label=f"R(T = {np.round(T_list[i],4)}), d = {np.round(np.min(dist_matrix[i][-1]), 2)}")
+    for i in range(0,4):
+        to_mean_an = []
+        to_mean_te = []
+        with open(f'city_200_{i + 1}.pkl', 'rb') as file:
+            [city, dist] = pickle.load(file)
+        M = len(city)
+        nn_route = nnsolution(M, dist)
+        T_0 = np.sqrt(length(M, dist, nn_route)) / M
+        for j in range(N_sim):
+            print(i, j)
+            temp_route, dist_matrix = tempering(M, dist, nn_route, N_tot, N_r, T_max, T_min, L)
+            route, tot_dist = annealing(M, dist, nn_route, N_totA, N_rA, T_0, rA)
+            to_mean_an.append(np.min(tot_dist))
+            to_mean_te.append(np.min(dist_matrix))
+        mean_an.append(np.mean(to_mean_an))
+        std_an.append(np.std(to_mean_an))
+        mean_te.append(np.mean(to_mean_te))
+        std_te.append(np.std(to_mean_te))
+
+    x = np.arange(1, len(mean_te) + 1)
+
+    # Create the plot
+    plt.figure(figsize=(8, 5))
+    plt.errorbar(x, mean_te, yerr=std_te, fmt='o', capsize=5, label='Parallel tempering', color='blue', ecolor='red')
+    plt.errorbar(x, mean_an, yerr=std_an, fmt='x', capsize=5, label='Simulated annealing', color='green', ecolor='red')
+
+    # Add labels, grid, and title
+    plt.xlabel('Map')
+    plt.ylabel('Mean distance')
+    plt.xticks(x)  # Ensure x-ticks match the indices
+    plt.grid(True, linestyle='--', alpha=0.7)
     plt.legend()
-    plt.xlabel("MC Iteration step")
-    plt.ylabel("Total length")
-    # plt.savefig(f"Tempering_M={M}_N_tot={N_tot}_N_r={N_r}_(T_max,L,T_min)={T_max, L, T_min}).pdf")
-    plt.show()
 
+    # Display the plot
+    plt.show()
 
 
     # route_3, tot_dist = MC(1000, M, 0.1, dist, route_1)
