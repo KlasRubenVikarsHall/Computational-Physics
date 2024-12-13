@@ -177,6 +177,8 @@ def tempering(M, D, route, N_tot, N_step, T_max, T_min, L, T=[]):
     
 
 if __name__ == "__main__":
+    pass
+    # # CREATE MAP
     # M = 10
     # N_tot = 1000000
     # N_r = 40000
@@ -190,16 +192,6 @@ if __name__ == "__main__":
     # with open('city_10_1.pkl', 'wb') as file:
     #     pickle.dump([city, dist], file)
 
-
-    # with open('city_10_1.pkl', 'rb') as file:
-    #     [city, dist] = pickle.load(file)
-    # M = len(city)
-    # N_tot = 100000
-    # N_r = 5000
-    # r = 0.95
-    # T_0 = 0.1
-    # route_2 = nnsolution(M, dist)
-    # opt = 2.2737415617330017
     # # OPTIMAL VS ANNEALING
     # route_1 = initialize_route(M)
     # route_annealing, tot_dist = annealing(M, dist, route_1, N_tot, N_r, T_0, r)
@@ -212,7 +204,7 @@ if __name__ == "__main__":
     # plt.savefig(f"Optimal vs annealing M=20, d = {np.round(np.min(tot_dist), 4)}.pdf")
     # plt.show()
 
-    # OPTIMAL VS TEMPERING
+    # # OPTIMAL VS TEMPERING
     # route_1 = initialize_route(M)
     # opt = 2.2737415617330017
     # T_max = 0.1
@@ -230,7 +222,7 @@ if __name__ == "__main__":
     # plt.show()
     # plt.savefig(f"Optimal vs tempering M=20, N_tot={N_tot}, N_r={N_r}, (T_max,L,T_min) = {T_max, L, T_min}).pdf")
 
-    # ANNEALING 200
+    # # ANNEALING M = 200
     # with open('city_200_1.pkl', 'rb') as file:
     #     [city, dist] = pickle.load(file)
     # M = len(city)
@@ -250,7 +242,7 @@ if __name__ == "__main__":
     # # plt.savefig(f"Annealing_M=200_r={r}_city2_d={np.round(np.min(tot_dist), 4)}.pdf", format="pdf")
     # plt.show()
 
-    # GRID SEARCH ANNEALING
+    # # GRID SEARCH ANNEALING
     # with open('city_200_1.pkl', 'rb') as file:
     #     [city, dist] = pickle.load(file)
     # M = len(city)
@@ -326,8 +318,7 @@ if __name__ == "__main__":
     # # Display the plot
     # plt.show()
 
-
-    # TEMPERING 200
+    # # TEMPERING M = 200
     # with open('city_200_1.pkl', 'rb') as file:
     #     [city, dist] = pickle.load(file)
     # M = len(city)
@@ -352,7 +343,7 @@ if __name__ == "__main__":
     # # plt.savefig(f"Tempering_M={M}_N_tot={N_tot}_N_r={N_r}_(T_max,L,T_min)={T_max, L, T_min}).pdf")
     # plt.show()
 
-    # DIFFERENT CITIES
+    # # COMPARING ON DIFFERENT MAPS
 
     # N_sim = 10
     # mean_an = []
@@ -406,8 +397,7 @@ if __name__ == "__main__":
     # # Display the plot
     # plt.show()
 
-
-    # TEMPERING
+    # TEMPERING PARAMETER SEARCH
 
     # N_sim = 10
     # mean_te = []
@@ -454,7 +444,6 @@ if __name__ == "__main__":
 
     # # Display the plot
     # plt.show()
-
 
     # route_3, tot_dist = MC(1000, M, 0.1, dist, route_1)
     # plt.plot(range(N_tot), tot_dist)
