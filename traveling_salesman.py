@@ -79,7 +79,7 @@ def length(M, distances, route):
     return total_length
 
 
-def MC(N, M, T, distances, route, k=1):
+def MC(N, M, T, distances, route):
     distance = [length(M, distances, route)]
     for i in range(N-1):
         a = randrange(M)
@@ -88,7 +88,7 @@ def MC(N, M, T, distances, route, k=1):
             b = randrange(M)
         ksi = rand()
         d_E = delta_E(M, distances, route, a, b)
-        d_e = np.exp(-d_E / (k * T))
+        d_e = np.exp(-d_E / (T))
         if ksi < np.min((d_e, 1)):
             route = exchange(M, route, a, b)
             distance.append(distance[-1] + d_E)
@@ -131,19 +131,23 @@ def annealing(M, D, route, T_tot, T_step, T_0, r):
     return route, dist_list
 
 
-def tempering(M, D, route, N_tot, N_step, T_max, T_min, L, k=1):
+def tempering(M, D, route, N_tot, N_step, T_max, T_min, L, T=[]):
     # N_tot: Total number of MC steps
     # N_step: number of steps before exchanging temps
     # T_max: highest T
     # T_min: lowest temp
     # L: number of simulations at different T
-    T_step = (T_max - T_min) / (L - 1)
-    T_list = [T_min + T_step * i for i in range(L)]
-    route_list = [deepcopy(route) for i in range(L)]
+    if T == []:
+        T_step = (T_max - T_min) / (L - 1)
+        T_list = [T_min + T_step * i for i in range(L)]
+        route_list = [deepcopy(route) for i in range(L)]
+    else:
+        T_list = T
+        route_list = [deepcopy(route) for i in range(L)]
     dist_matrix = [[length(M, D, route)] for route in route_list]
     for j in range(int(N_tot / N_step)):
         for i in range(len(route_list)):
-            route_list[i], tot_dist = MC(N_step, M, T_list[i], D, route_list[i], k)
+            route_list[i], tot_dist = MC(N_step, M, T_list[i], D, route_list[i])
             dist_matrix[i].extend(tot_dist)
         # Change places 
         T_rand = randrange(0, L - 2) # Randomly pick a Temperature between T_0 to T_max - 1
@@ -157,7 +161,7 @@ def tempering(M, D, route, N_tot, N_step, T_max, T_min, L, k=1):
         # T_close = np.argmin([np.abs(element) for element in diff])
         T_close = T_rand + 1
         ksi = rand()
-        beta = + 1 /( T_list[T_rand] * k) - 1 /( T_list[T_close] * k)
+        beta = + 1 /( T_list[T_rand]) - 1 /( T_list[T_close])
         dE =  length(M, D, route_list[T_rand]) - length(M, D, route_list[T_close])
         check = np.exp(beta * dE)
         # print(beta, dE)
@@ -187,12 +191,16 @@ if __name__ == "__main__":
     #     pickle.dump([city, dist], file)
 
 
-    # with open('city_200_1.pkl', 'rb') as file:
+    # with open('city_10_1.pkl', 'rb') as file:
     #     [city, dist] = pickle.load(file)
     # M = len(city)
+    # N_tot = 100000
+    # N_r = 5000
+    # r = 0.95
+    # T_0 = 0.1
     # route_2 = nnsolution(M, dist)
-
-    # OPTIMAL VS ANNEALING
+    # opt = 2.2737415617330017
+    # # OPTIMAL VS ANNEALING
     # route_1 = initialize_route(M)
     # route_annealing, tot_dist = annealing(M, dist, route_1, N_tot, N_r, T_0, r)
 
@@ -201,8 +209,8 @@ if __name__ == "__main__":
     # plt.legend()
     # plt.xlabel("MC Iteration step")
     # plt.ylabel("Total length")
-    # plt.show()
     # plt.savefig(f"Optimal vs annealing M=20, d = {np.round(np.min(tot_dist), 4)}.pdf")
+    # plt.show()
 
     # OPTIMAL VS TEMPERING
     # route_1 = initialize_route(M)
@@ -346,57 +354,106 @@ if __name__ == "__main__":
 
     # DIFFERENT CITIES
 
-    N_sim = 10
-    mean_an = []
-    std_an = []
-    mean_te = []
-    std_te = []
+    # N_sim = 10
+    # mean_an = []
+    # std_an = []
+    # mean_te = []
+    # std_te = []
 
-    N_tot = 1000000
-    N_r = 5000
-    T_max = 0.01
-    L = 10
-    T_min = 0.0001
+    # N_tot = 1000000
+    # N_r = 5000
+    # T_max = 0.01
+    # L = 10
+    # T_min = 0.0001
 
-    N_totA = 10000000
-    N_rA = 100000
-    rA = 0.95
+    # N_totA = 10000000
+    # N_rA = 100000
+    # rA = 0.95
 
-    for i in range(0,4):
-        to_mean_an = []
-        to_mean_te = []
-        with open(f'city_200_{i + 1}.pkl', 'rb') as file:
-            [city, dist] = pickle.load(file)
-        M = len(city)
-        nn_route = nnsolution(M, dist)
-        T_0 = np.sqrt(length(M, dist, nn_route)) / M
-        for j in range(N_sim):
-            print(i, j)
-            temp_route, dist_matrix = tempering(M, dist, nn_route, N_tot, N_r, T_max, T_min, L)
-            route, tot_dist = annealing(M, dist, nn_route, N_totA, N_rA, T_0, rA)
-            to_mean_an.append(np.min(tot_dist))
-            to_mean_te.append(np.min(dist_matrix))
-        mean_an.append(np.mean(to_mean_an))
-        std_an.append(np.std(to_mean_an))
-        mean_te.append(np.mean(to_mean_te))
-        std_te.append(np.std(to_mean_te))
+    # for i in range(0,4):
+    #     to_mean_an = []
+    #     to_mean_te = []
+    #     with open(f'city_200_{i + 1}.pkl', 'rb') as file:
+    #         [city, dist] = pickle.load(file)
+    #     M = len(city)
+    #     nn_route = nnsolution(M, dist)
+    #     T_0 = np.sqrt(length(M, dist, nn_route)) / M
+    #     for j in range(N_sim):
+    #         print(i, j)
+    #         temp_route, dist_matrix = tempering(M, dist, nn_route, N_tot, N_r, T_max, T_min, L)
+    #         route, tot_dist = annealing(M, dist, nn_route, N_totA, N_rA, T_0, rA)
+    #         to_mean_an.append(np.min(tot_dist))
+    #         to_mean_te.append(np.min(dist_matrix))
+    #     mean_an.append(np.mean(to_mean_an))
+    #     std_an.append(np.std(to_mean_an))
+    #     mean_te.append(np.mean(to_mean_te))
+    #     std_te.append(np.std(to_mean_te))
 
-    x = np.arange(1, len(mean_te) + 1)
+    # x = np.arange(1, len(mean_te) + 1)
 
-    # Create the plot
-    plt.figure(figsize=(8, 5))
-    plt.errorbar(x, mean_te, yerr=std_te, fmt='o', capsize=5, label='Parallel tempering', color='blue', ecolor='red')
-    plt.errorbar(x, mean_an, yerr=std_an, fmt='x', capsize=5, label='Simulated annealing', color='green', ecolor='red')
+    # # Create the plot
+    # plt.figure(figsize=(8, 5))
+    # plt.errorbar(x, mean_te, yerr=std_te, fmt='o', capsize=5, label='Parallel tempering', color='blue', ecolor='red')
+    # plt.errorbar(x, mean_an, yerr=std_an, fmt='x', capsize=5, label='Simulated annealing', color='green', ecolor='red')
 
-    # Add labels, grid, and title
-    plt.xlabel('Map')
-    plt.ylabel('Mean distance')
-    plt.xticks(x)  # Ensure x-ticks match the indices
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.legend()
+    # # Add labels, grid, and title
+    # plt.xlabel('Map')
+    # plt.ylabel('Mean distance')
+    # plt.xticks(x)  # Ensure x-ticks match the indices
+    # plt.grid(True, linestyle='--', alpha=0.7)
+    # plt.legend()
 
-    # Display the plot
-    plt.show()
+    # # Display the plot
+    # plt.show()
+
+
+    # TEMPERING
+
+    # N_sim = 10
+    # mean_te = []
+    # std_te = []
+    # with open('city_200_1.pkl', 'rb') as file:
+    #     [city, dist] = pickle.load(file)
+    # M = len(city)
+    # nn_route = nnsolution(M, dist)
+
+
+    # N_tot = 1000000
+    # N_r = 5000
+    # T_max = 0.01
+    # L1 = 5
+    # L2 = 10
+    # T_min = 0.0001
+    # T_step = (T_max - T_min) / (L2 - 1)
+    # T_list = [T_min + T_step * i for i in range(L2)]
+    # T_high = [T_list[i + 5] for i in range(L1)]
+    # T_low = [T_list[i] for i in range(L1)]
+    # T_all = [T_high, T_low, T_list]
+    # L = [L1, L1, L2]
+    # for Tid, T in enumerate(T_all):
+    #     to_mean = []
+    #     for j in range(N_sim):
+    #         print(j)
+    #         temp_route, dist_matrix = tempering(M, dist, nn_route, N_tot, N_r, 0.01, 0.0005, L[Tid], T)
+    #         to_mean.append(np.min(dist_matrix))
+    #     mean_te.append(np.mean(to_mean))
+    #     std_te.append(np.std(to_mean))
+    # print(mean_te)
+    # x = np.arange(1, len(mean_te) + 1)
+
+    # # Create the plot
+    # plt.figure(figsize=(8, 5))
+    # plt.errorbar(x, mean_te, yerr=std_te, fmt='o', capsize=5, label='Parallel tempering', color='blue', ecolor='red')
+
+    # # Add labels, grid, and title
+    # plt.xlabel('T configuration')
+    # plt.ylabel('Mean distance')
+    # plt.xticks(x)  # Ensure x-ticks match the indices
+    # plt.grid(True, linestyle='--', alpha=0.7)
+    # plt.legend()
+
+    # # Display the plot
+    # plt.show()
 
 
     # route_3, tot_dist = MC(1000, M, 0.1, dist, route_1)
